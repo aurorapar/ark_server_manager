@@ -41,7 +41,7 @@ def main():
 
         print(f"Last known running servers:")
         for running_map_name in server_instances.keys():
-            print(f"\n\t{running_map_name}")
+            print(f"\t{running_map_name}")
 
         if not os.path.exists(INSTALL_LOCATION):
             input("Could not find server executable. Check installation directory. Press enter to close.")
@@ -67,7 +67,7 @@ def prompt_for_map():
     while not server_selection:
         print("Please select the desired map: ")
         for map_number, ark_map in enumerate(ark_maps):
-            print(f"\n\t{map_number}. {ark_map}")
+            print(f"\t{map_number + 1}. {ark_map}")
         server_selection = input()
 
         if not server_selection.isdigit():
