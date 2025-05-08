@@ -113,25 +113,21 @@ def prompt_for_map(server_instances):
     server_selection = None
     ark_maps = list(MAPS_AND_PORTS.keys())
 
-    while not server_selection:
-        server_selection = None  # Resets the value in case of bad input
-        print("Please select the desired map: ")
-        for map_number, ark_map in enumerate(ark_maps):
-            print(f"\t{map_number + 1}. {ark_map}")
-        server_selection = input().strip().lower()
+    print("Please select the desired map: ")
+    for map_number, ark_map in enumerate(ark_maps):
+        print(f"\t{map_number + 1}. {ark_map}")
+    server_selection = input().strip().lower()
 
-        if server_selection in ['exit', 'close', 'quit']:
-            close(server_instances)
+    if server_selection in ['exit', 'close', 'quit']:
+        close(server_instances)
 
-        if not server_selection.isdigit():
-            print("You did not select a valid choice")
-            continue
-        server_selection = int(server_selection)
-        if not 0 < server_selection <= len(ark_maps):
-            print("You did not select a valid choice")
-            continue
-
-        break
+    if not server_selection.isdigit():
+        print("You did not select a valid choice")
+        return
+    server_selection = int(server_selection)
+    if not 0 < server_selection <= len(ark_maps):
+        print("You did not select a valid choice")
+        return
 
     server_selection = ark_maps[server_selection-1]
     return server_selection, MAPS_AND_PORTS[server_selection]
