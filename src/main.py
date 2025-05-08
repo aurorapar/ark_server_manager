@@ -2,6 +2,7 @@ import os
 from time import sleep
 import traceback
 from multiprocessing import Process
+import subprocess
 from threading import Thread
 
 INSTALL_LOCATION = r"C:\arksa\ShooterGame\Binaries\Win64\ArkAscendedServer.exe"
@@ -48,20 +49,22 @@ def main():
             input("Could not find server executable. Check installation directory. Press enter to close.")
             close()
 
-        map_name, selected_map = prompt_for_map()
+        map_name, selected_map = prompt_for_map(server_instances)
         if map_name in server_instances.keys():
             print("That map is already running. Restart all servers and the manager if you're having problems.")
-            close()
+            continue
 
-        command, command_args = format_map_command(map_name, selected_map)
+        command = format_map_command(map_name, selected_map)
 
-        print(f"Starting map {map_name}. Startup settings:\n\t{command} " + " ".join(command_args))
-        server_instance = Process(target=command, args=command_args)
+        print(f"Starting map {map_name}. Startup settings:\n\t{" ".join(command)}")
+        print(command)
+
+        server_instance = Process(target=subprocess.run, args=(command,))
         server_instance.start()
         server_instances[map_name] = server_instance
 
 
-def prompt_for_map():
+def prompt_for_map(server_instances):
     server_selection = None
     ark_maps = list(MAPS_AND_PORTS.keys())
 
@@ -70,7 +73,10 @@ def prompt_for_map():
         print("Please select the desired map: ")
         for map_number, ark_map in enumerate(ark_maps):
             print(f"\t{map_number + 1}. {ark_map}")
-        server_selection = input()
+        server_selection = input().strip().lower()
+
+        if server_selection in ['exit', 'close', 'quit']:
+            close()
 
         if not server_selection.isdigit():
             print("You did not select a valid choice")
@@ -97,26 +103,35 @@ def check_running_servers(server_instances):
             if not process.is_alive():
                 print(f"Map {map_name} is no longer running")
                 prunes.append(map_name)
-        for prune in prunes:
-            del server_instances[prune]
+        if prunes:
+            for prune in prunes:
+                del server_instances[prune]
+            print(f"Last known running servers:")
+            for running_map_name in server_instances.keys():
+                print(f"\t{running_map_name}")
 
 
 def format_map_command(map_name, map_config):
-    command = f'"{INSTALL_LOCATION} {map_config['map']}'
-    command += f'?SessionName={SERVER_NAME + map_name}?GameServerQueryPort={map_config['ports'][2]}"'
-    command_args = []
+    command = [
+        f'{INSTALL_LOCATION}',
+        f'{map_config['map']}' +
+        f'?SessionName={SERVER_NAME + map_name}' +
+        f'?GameServerQueryPort={map_config['ports'][2]}'
+    ]
     for x in SETTINGS:
-        command_args.append(f' -{x}')
-    command_args.append(f' -port={map_config['ports'][0]}')
+        command.append(f'-{x}')
+    command.append(f'-port={map_config['ports'][0]}')
 
     if MODS:
-        command_args.append(" -mods=\"" + ",".join(list(map(str, MODS))) + "\"")
-    return command, command_args
+        command.append("-mods=\"" + ",".join(list(map(str, MODS))) + "\"")
+    return command
 
 
 def close():
+    print("Exiting...")
     global EXIT
     EXIT = True
+    print("Note - ARK servers don't respond to SIGTERM. Close servers manually, then press enter to close.")
     exit(1)
 
 
