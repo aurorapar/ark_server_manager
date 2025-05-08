@@ -52,16 +52,7 @@ def main():
             print("That map is already running. Restart all servers and the manager if you're having problems.")
             close()
 
-        command = f"start {INSTALL_LOCATION} " + \
-                  f"{selected_map['map']}"
-        command += f'?GameServerQueryPort={selected_map['ports'][2]}'
-
-        for x in SETTINGS:
-            command += f' -{x}'
-        command += f' -port={selected_map['ports'][0]}'
-
-        if MODS:
-            command += " -mods=\"" + ",".join(list(map(str, MODS))) + "\""
+        command = format_map_command(selected_map)
 
         print(f"Starting map {map_name}. Startup settings:\n\t{command}")
         server_instance = Process(target=os.system, args=(command,))
@@ -106,6 +97,20 @@ def check_running_servers(server_instances):
                 prunes.append(map_name)
         for prune in prunes:
             del server_instances[prune]
+
+
+def format_map_command(map_config):
+    command = f"start {INSTALL_LOCATION} " + \
+              f"{map_config['map']}"
+    command += f'?GameServerQueryPort={map_config['ports'][2]}'
+
+    for x in SETTINGS:
+        command += f' -{x}'
+    command += f' -port={map_config['ports'][0]}'
+
+    if MODS:
+        command += " -mods=\"" + ",".join(list(map(str, MODS))) + "\""
+    return command
 
 
 def close():
