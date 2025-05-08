@@ -6,6 +6,7 @@ from threading import Thread
 
 INSTALL_LOCATION = r"C:\arksa\ShooterGame\Binaries\Win64\ArkAscendedServer.exe"
 CLUSTER_ID = "SpawningPool"
+SERVER_NAME = "The Spawning Pool - "
 MAPS_AND_PORTS = {
     "The Center": {
         "map": "TheCenter_WP",
@@ -52,7 +53,7 @@ def main():
             print("That map is already running. Restart all servers and the manager if you're having problems.")
             close()
 
-        command = format_map_command(selected_map)
+        command = format_map_command(map_name, selected_map)
 
         print(f"Starting map {map_name}. Startup settings:\n\t{command}")
         server_instance = Process(target=os.system, args=(command,))
@@ -65,6 +66,7 @@ def prompt_for_map():
     ark_maps = list(MAPS_AND_PORTS.keys())
 
     while not server_selection:
+        server_selection = None  # Resets the value in case of bad input
         print("Please select the desired map: ")
         for map_number, ark_map in enumerate(ark_maps):
             print(f"\t{map_number + 1}. {ark_map}")
@@ -99,10 +101,10 @@ def check_running_servers(server_instances):
             del server_instances[prune]
 
 
-def format_map_command(map_config):
+def format_map_command(map_name, map_config):
     command = f"start {INSTALL_LOCATION} " + \
               f"{map_config['map']}"
-    command += f'?GameServerQueryPort={map_config['ports'][2]}'
+    command += f'?SessionName={SERVER_NAME + map_name}?GameServerQueryPort={map_config['ports'][2]}'
 
     for x in SETTINGS:
         command += f' -{x}'
