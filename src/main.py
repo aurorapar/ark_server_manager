@@ -48,18 +48,65 @@ def main():
             input("Could not find server executable. Check installation directory. Press enter to close.")
             close(server_instances)
 
-        map_name, selected_map = prompt_for_map(server_instances)
-        if map_name in server_instances.keys():
-            print("That map is already running. Restart all servers and the manager if you're having problems.")
-            continue
+        user_selections = {
+            "Start Server": start_server,
+            "Stop Server": stop_server,
+            "Exit": close
+        }
 
-        command = format_map_command(map_name, selected_map)
+        selection_names = list(user_selections.keys())
 
-        print(f"Starting map {map_name}. Startup settings:\n\t{" ".join(command)}")
+        user_selection = None
+        while not user_selection:
+            user_selection = None  # Resets the value in case of bad input
+            print("Please select the desired option: ")
+            for selection_number, selection_name in enumerate(selection_names):
+                print(f"\t{selection_number + 1}. {selection_name}")
+            user_selection = input().strip().lower()
 
-        thread = Thread(target=start_server_instance, args=(map_name, command, server_instances))
-        thread.start()
-        thread.join()
+            if not user_selection.isdigit():
+                print("You did not select a valid choice")
+                continue
+            user_selection = int(user_selection)
+            if not 0 < user_selection <= len(selection_names):
+                print("You did not select a valid choice")
+                continue
+
+            user_selections[selection_names[user_selection - 1]](server_instances)
+
+
+def start_server(server_instances):
+    map_name, selected_map = prompt_for_map(server_instances)
+    if map_name in server_instances.keys():
+        print("That map is already running. Restart all servers and the manager if you're having problems.")
+        return
+
+    command = format_map_command(map_name, selected_map)
+
+    print(f"Starting map {map_name}. Startup settings:\n\t{" ".join(command)}")
+
+    thread = Thread(target=start_server_instance, args=(map_name, command, server_instances))
+    thread.start()
+    thread.join()
+
+
+def stop_server(server_instances):
+    selection_names = list(server_instances.keys())
+    user_selection = None  # Resets the value in case of bad input
+    print("Please select the desired option: ")
+    for selection_number, selection_name in enumerate(selection_names):
+        print(f"\t{selection_number + 1}. {selection_name}")
+    user_selection = input().strip().lower()
+
+    if not user_selection.isdigit():
+        print("You did not select a valid choice")
+        return
+    user_selection = int(user_selection)
+    if not 0 < user_selection <= len(selection_names):
+        print("You did not select a valid choice")
+        return
+
+    server_instances[selection_names[user_selection - 1]].terminate()
 
 
 def prompt_for_map(server_instances):
