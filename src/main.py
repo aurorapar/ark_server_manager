@@ -53,10 +53,10 @@ def main():
             print("That map is already running. Restart all servers and the manager if you're having problems.")
             close()
 
-        command = format_map_command(map_name, selected_map)
+        command, command_args = format_map_command(map_name, selected_map)
 
-        print(f"Starting map {map_name}. Startup settings:\n\t{command}")
-        server_instance = Process(target=os.system, args=(command,))
+        print(f"Starting map {map_name}. Startup settings:\n\t{command} " + " ".join(command_args))
+        server_instance = Process(target=command, args=command_args)
         server_instance.start()
         server_instances[map_name] = server_instance
 
@@ -102,17 +102,16 @@ def check_running_servers(server_instances):
 
 
 def format_map_command(map_name, map_config):
-    command = f"start {INSTALL_LOCATION} " + \
-              f"{map_config['map']}"
-    command += f'?SessionName={SERVER_NAME + map_name}?GameServerQueryPort={map_config['ports'][2]}'
-
+    command = f'"{INSTALL_LOCATION} {map_config['map']}'
+    command += f'?SessionName={SERVER_NAME + map_name}?GameServerQueryPort={map_config['ports'][2]}"'
+    command_args = []
     for x in SETTINGS:
-        command += f' -{x}'
-    command += f' -port={map_config['ports'][0]}'
+        command_args.append(f' -{x}')
+    command_args.append(f' -port={map_config['ports'][0]}')
 
     if MODS:
-        command += " -mods=\"" + ",".join(list(map(str, MODS))) + "\""
-    return command
+        command_args.append(" -mods=\"" + ",".join(list(map(str, MODS))) + "\"")
+    return command, command_args
 
 
 def close():
