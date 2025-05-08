@@ -1,7 +1,6 @@
 import os
 from time import sleep
 import traceback
-from multiprocessing import Process
 import subprocess
 from threading import Thread
 
@@ -47,7 +46,7 @@ def main():
 
         if not os.path.exists(INSTALL_LOCATION):
             input("Could not find server executable. Check installation directory. Press enter to close.")
-            close()
+            close(server_instances)
 
         map_name, selected_map = prompt_for_map(server_instances)
         if map_name in server_instances.keys():
@@ -57,11 +56,10 @@ def main():
         command = format_map_command(map_name, selected_map)
 
         print(f"Starting map {map_name}. Startup settings:\n\t{" ".join(command)}")
-        print(command)
 
-        server_instance = Process(target=subprocess.run, args=(command,))
-        server_instance.start()
-        server_instances[map_name] = server_instance
+        thread = Thread(target=start_server_instance, args=(map_name, command, server_instances))
+        thread.start()
+        thread.join()
 
 
 def prompt_for_map(server_instances):
@@ -76,7 +74,7 @@ def prompt_for_map(server_instances):
         server_selection = input().strip().lower()
 
         if server_selection in ['exit', 'close', 'quit']:
-            close()
+            close(server_instances)
 
         if not server_selection.isdigit():
             print("You did not select a valid choice")
@@ -99,8 +97,8 @@ def check_running_servers(server_instances):
         sleep(1)
         prunes = []
         for map_name, process in server_instances.items():
-            process.join(timeout=0)
-            if not process.is_alive():
+            status = process.poll()
+            if status:
                 print(f"Map {map_name} is no longer running")
                 prunes.append(map_name)
         if prunes:
@@ -127,11 +125,17 @@ def format_map_command(map_name, map_config):
     return command
 
 
-def close():
+def start_server_instance(map_name, command, server_instances):
+    server_instance = subprocess.Popen(command)
+    server_instances[map_name] = server_instance
+
+
+def close(server_instances):
     print("Exiting...")
+    for map_name, server_instance in server_instances.items():
+        server_instance.terminate()
     global EXIT
     EXIT = True
-    print("Note - ARK servers don't respond to SIGTERM. Close servers manually, then press enter to close.")
     exit(1)
 
 
